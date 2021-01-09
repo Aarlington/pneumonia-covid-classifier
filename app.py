@@ -4,11 +4,14 @@ import glob
 import re
 import numpy as np
 import tensorflow as tf
+import cv2
+import imutils
 
 # Keras
-from keras.applications.imagenet_utils import preprocess_input, decode_predictions
+# from keras.applications.imagenet_utils import preprocess_input, decode_predictions
+from keras.preprocessing.image import img_to_array
 # from keras.models import load_model
-from tensorflow.keras.models import load_model
+from tensorflow.python.keras.models import load_model
 from keras.preprocessing import image
 
 # Flask utils
@@ -19,61 +22,24 @@ from gevent.pywsgi import WSGIServer
 # Define a flask app
 app = Flask(__name__)
 
-# Model saved with Keras model.save()
-MODEL_PATH = '/CoViD-19 Indicator/models/covid19.h5'
+# You can load your model or covid.h5/pneu-3.h5 in modelsc
+MODEL_PATH = 'models/pneu-3.h5'
 
 # Load your trained model
 model = load_model(MODEL_PATH)
-model._make_predict_function()          # Necessary
+# model._make_predict_function()          # Necessary
 
 print('Model loading...')
 
 # You can also use pretrained model from Keras
 # Check https://keras.io/applications/
-# from keras.applications.resnet50 import ResNet50
-# model = ResNet50(weights='imagenet', include_top=False)
+# from keras.applications.vgg16 import VGG16
+# model = VGG16(weights='imagenet', include_top=False)
 #graph = tf.get_default_graph()
 
 print('Model loaded. Started serving...')
 
 print('Model loaded. Check http://127.0.0.1:5000/')
-
-def model_predict(img_path, model):
-    original = image.load_img(img_path, target_size=(224, 224))
-
-    # Preprocessing the image
-
-    # Convert the PIL image to a numpy array
-    # IN PIL - image is in (width, height, channel)
-    # In Numpy - image is in (height, width, channel)
-    numpy_image = image.img_to_array(original)
-
-    # Convert the image / images into batch format
-    # expand_dims will add an extra dimension to the data at a particular axis
-    # We want the input matrix to the network to be of the form (batchsize, height, width, channels)
-    # Thus we add the extra dimension to the axis 0.
-    image_batch = np.expand_dims(numpy_image, axis=0)
-
-    print('PIL image size = ', original.size)
-    print('NumPy image size = ', numpy_image.shape)
-    print('Batch image  size = ', image_batch.shape)
-
-    # Be careful how your trained model deals with the input
-    # otherwise, it won't make correct prediction!
-    processed_image = preprocess_input(image_batch, mode='caffe')
-
-    #with graph.as_default():
-
-    preds = model.predict(processed_image)
-
-    print('Deleting File at Path: ' + img_path)
-
-    os.remove(img_path)
-
-    print('Deleting File at Path - Success - ')
-
-    return preds
-
 
 @app.route('/', methods=['GET'])
 def index():
@@ -95,21 +61,24 @@ def upload():
         print('Begin Model Prediction...')
 
         # Make prediction
-        preds = model_predict(file_path, model)
-        # preds = np.argmax(preds, axis=-1)
+        image = cv2.imread(file_path)
+        image = image.copy()
+        image = cv2.resize(image, (224, 224))
+        image = image.astype("float") / 255.0
+        image = img_to_array(image)
+        image = np.expand_dims(image, axis=0)
+
+        (normal, pneumonia) = model.predict(image)[0]
+
+
+        label = "Pneumonia" if pneumonia > normal else "normal"
+        proba = pneumonia if pneumonia > normal else normal
+        label = "The X-Ray Analyzed is {} - {:.2f}%".format(label, proba * 100)
 
         print('End Model Prediction...')
+        os.remove(file_path)
 
-        # Process your result for human
-        CATEGORIES = ["Positive.", "Negative."]
-        # pred_class = preds.argmax(axis=-1)            # Simple argmax
-        preds = CATEGORIES[np.argmax(preds)]
-        # pred_class = decode_predictions(preds, top=1)   # ImageNet Decode
-        # result = str(preds[0][0][0])             # Convert to string
-        result = preds
-        # print(np.argmax(preds))
-
-        return result
+        return label
     return None
 
 if __name__ == '__main__':
