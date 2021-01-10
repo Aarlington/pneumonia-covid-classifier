@@ -6,6 +6,12 @@ import numpy as np
 import tensorflow as tf
 import cv2
 import imutils
+import argparse
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-m", "--model", default='models/pneu-3.h5',
+                help="Provide the model path.")
+args = vars(ap.parse_args())
 
 # Keras
 # from keras.applications.imagenet_utils import preprocess_input, decode_predictions
@@ -23,7 +29,7 @@ from gevent.pywsgi import WSGIServer
 app = Flask(__name__)
 
 # You can load your model or covid.h5/pneu-3.h5 in modelsc
-MODEL_PATH = 'models/pneu-3.h5'
+MODEL_PATH = args["model"]
 
 # Load your trained model
 model = load_model(MODEL_PATH)
