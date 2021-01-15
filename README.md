@@ -6,4 +6,4 @@ The requirements.txt file installs a headless version of opencv for image proces
 
 
 To run the classifier in your browser, execute: 
-python app.py ~ "-m, --model" optional arguments
+python app.py "-m, --model" optional arguments
