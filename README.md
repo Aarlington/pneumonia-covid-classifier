@@ -5,7 +5,7 @@ This project can be launched in Google App Engine Flask App for Pneumonia/CoVID-
 The requirements.txt file installs a headless version of opencv for image processing at the prediction stage, this is what was most compatible when deploying to production with Google App Engine, feel free to tinker with it.
 
 
-## Use
+## How To
 
 To run the classifier in your browser, execute: 
 python app.py "-m, --model" optional arguments
