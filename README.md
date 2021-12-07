@@ -5,9 +5,9 @@ This project can be launched in Google App Engine for Pneumonia/CoVID-19 indicat
 The requirements.txt file installs a headless version of opencv for image processing at the prediction stage, this is what was most compatible when deploying to production with Google App Engine, feel free to tinker with it.
 
 
-## How To
+## How To Use
 
-To run the classifier in your browser, execute: 
+To run the classifier in your browser, execute in terminal: 
 python app.py "-m, --model" optional arguments
 
 ##
